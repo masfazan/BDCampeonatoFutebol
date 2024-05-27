@@ -42,17 +42,16 @@ end;
 
 go
 create or alter procedure Inserir_Time
-	@id_time int,
 	@nometime varchar(100),
 	@data_criacao date,
-	@apelido varchar(100)
+	@apelido varchar(100),
+	@id_time int output
 as
-if (@id_time <5)
 begin
 insert into Time_Futebol
 	([nometime],[data_criacao],[apelido])
 values (@nometime,@data_criacao,@apelido);
-
+set @id_time = SCOPE_IDENTITY();
 end;
 
 go
@@ -75,8 +74,6 @@ create or alter procedure Inserir_Atualizar_Gol
 	@id_partida int,
 	@gols_marcados int,
 	@gols_sofridos int,
-	@time_mandante varchar(100),
-	@time_visitante varchar(100),
 	@nometime varchar(100)
 as
 begin
@@ -84,11 +81,12 @@ update Partida
 	set
 	gols_mandante=@gols_mandante,
 	gols_visitante=@gols_visitante
-	where id_partida = @id_partida
+	where id_partida = @id_partida;
+
 update Time_Futebol
 	set gols_marcados= gols_marcados+@gols_mandante,
 		gols_sofridos= gols_sofridos+@gols_visitante
-	where nometime=@time_mandante and nometime=@time_visitante
+	where nometime=@nometime;
 end;
 
 go
@@ -101,17 +99,17 @@ declare
 	@gols_mandante int,
 	@gols_visitante int,
 	@venc_partida varchar (100),
-	@pontuacao_mandante int,
-	@pontuacao_visitante int,
-	@id_partida int
-select 
+	@pontuacao_mandante int=0,
+	@pontuacao_visitante int=0,
+	@id_partida int;
+/*select 
 	@pontuacao_mandante=pontuacao
 	from Time_Futebol
-	where nometime=@time_mandante
+	where nometime=@time_mandante;
 select 
 	@pontuacao_visitante=pontuacao
 	from Time_Futebol
-	where nometime=@time_visitante
+	where nometime=@time_visitante;*/
 if(@venc_partida is null)
 begin
 if(@gols_mandante>@gols_visitante)
@@ -119,18 +117,18 @@ begin
 	set @pontuacao_mandante=5+@pontuacao_mandante
 	set @venc_partida=@time_mandante
 	update Time_Futebol set pontuacao=pontuacao+@pontuacao_mandante 
-	where nometime=@time_mandante
+	where nometime=@time_mandante;
 	update Partida set venc_partida=@venc_partida
-	where id_partida=@id_partida
+	where id_partida=@id_partida;
 end;
 if(@gols_visitante>@gols_mandante)
 begin
 	set @pontuacao_visitante=3+@pontuacao_visitante
 	set @venc_partida=@time_visitante
 	update Time_Futebol set pontuacao=pontuacao+@pontuacao_visitante 
-	where nometime=@time_visitante
+	where nometime=@time_visitante;
 	update Partida set venc_partida = @venc_partida
-	where id_partida=@id_partida
+	where id_partida=@id_partida;
 end;
 if(@gols_visitante=@gols_mandante)
 begin
@@ -138,11 +136,11 @@ begin
 	set @pontuacao_visitante=1+@pontuacao_visitante
 	set @venc_partida=@time_visitante + @time_mandante 
 	update Time_Futebol set pontuacao = pontuacao+@pontuacao_visitante 
-	where nometime=@time_visitante
+	where nometime=@time_visitante;
 	update Time_Futebol set pontuacao = pontuacao+@pontuacao_mandante 
-	where nometime=@time_mandante
+	where nometime=@time_mandante;
 	update Partida set venc_partida = @venc_partida
-	where id_partida=@id_partida
+	where id_partida=@id_partida;
 end;
 end;
 end;
@@ -184,21 +182,22 @@ begin
 select @total_gols,@gols_mandante,@gols_visitante
 set @total_gols=@gols_mandante+@gols_visitante
 update Partida set total_gols=@total_gols
-where id_partida=@id_partida
+where id_partida=@id_partida;
 select top(1)* from Partida
 	order by total_gols desc;
 end;
 
 go
 create or alter procedure Obter_Campeao
-	@vencedor varchar (100)
+	@vencedor varchar (100) output
 as
 begin
-	set @vencedor=(select top(1)*from Time_Futebol order by pontuacao desc)
+	select top(1) @vencedor = nometime from Time_Futebol order by pontuacao desc;
 end;
 
-exec Inserir_Time '','Palmeiras',' ', 'PAL'
-exec Inserir_Time '','Corinthians','2024-03-03 ', 'COR'
+
+exec Inserir_Time @nometime= 'Flamengo', @data_criacao= '1985-11-17', @apelido='FLA', @id_time output; 
+exec Inserir_Time 'Flamengo','1985-11-17 ', 'FLA', ''
 exec Inserir_Time '','São Paulo','2024-02-02 ', 'SAP'
 select* from Time_Futebol
 exec Inserir_Campeonato 'Brasileirão','2024-01-01'--erro
@@ -217,5 +216,9 @@ exec Time_Menos_Gols
 exec Partida_mais_gols
 --Campeão
 exec Obter_Campeao
+
+select*
+from information_schema.routines
+where routine_name = 'Inserir_Time';
 
 
