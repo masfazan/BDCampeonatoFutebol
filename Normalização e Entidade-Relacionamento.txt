@@ -1,0 +1,24 @@
+Normalização
+-Campeonato (nomecamp(PK), ano, vencedor)
+-Partida (idPartida(PK), nomeCampeonato*(FK), TimeMandante(FK), TimeVisitante(FK), golsMandante, golsVisitante, totalGols, vencedorPartida)
+-Time_Futebol(nomeTime(PK), dataCriacao, apelido, pontuacao, golsMarcados, golsSofridos)
+
+1ªForma(1NF): já está, pois todos os atributos são atômicos.
+2ªForma (2NF): já está, pois nenhum atributo não chave não depende de apenas uma parte da chave primária.
+3ªForma (3NF): já está, pois não há dependências transitivas na relação atual.
+
+Modelo Entidade-Relacionamento
+*Entidades:
+-Campeonato:
+Atributos: nomecamp (PK), ano, vencedor.
+-Partida:
+Atributos: idPartida(PK), nomeCampeonato*(FK), TimeMandante(FK), TimeVisitante(FK), golsMandante, golsVisitante, totalGols, vencedorPartida.
+Chaves Estrangeiras:
+nomeCampeonato (referencia nomecamp em Campeonato)
+TimeMandante (referencia nomeTime em Time_Futebol)
+TimeVisitante (referencia nomeTime em Time_Futebol)
+-Time_Futebol:
+Atributos: nomeTime(PK), dataCriacao, apelido, pontuacao, golsMarcados, golsSofridos.
+*Relacionamentos:
+-Campeonato relaciona com Partida: um Campeonato pode ter várias Partidas, mas uma Partida está associada a um Campeonato.
+-Partida relaciona com Time_Futebol: uma Partida tem dois Time_Futebol e um Time_Futebol pode participar de duas Partidas (ida e volta) nesse Campeonato.
